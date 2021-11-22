@@ -20,3 +20,4 @@ clean:
 	rm -rf *.o
 	rm -f main
 	rm -rf Output
+	rm -f main_nsys.*
