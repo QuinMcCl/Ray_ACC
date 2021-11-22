@@ -20,8 +20,8 @@ typedef struct {
 
 int cast_ray_triangle(vec_t * RayOri, vec_t * RayDir, triangle_t * tri, intersect_t * rtn);
 #pragma acc routine(cast_ray_triangle) seq
-int cast_ray_sphere(vec_t * RayOri, vec_t * RayDir, sphere_t * sphere, intersect_t * rtn);
-#pragma acc routine(cast_ray_sphere) seq
+int cast_ray_ellipsoid(vec_t * RayOri, vec_t * RayDir, ellipsoid_t * ellipsoid, intersect_t * rtn);
+#pragma acc routine(cast_ray_ellipsoid) seq
 int cast_ray_cuboid(vec_t * RayOri, vec_t * RayDir, cuboid_t * cuboid, intersect_t * rtn);
 #pragma acc routine(cast_ray_cuboid) seq
 int cast_ray_primitive(vec_t * RayOri, vec_t * RayDir, primitive_t * primitive, intersect_t * rtn);
