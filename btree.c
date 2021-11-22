@@ -14,12 +14,13 @@ typedef struct _btree_node {
 
 
 
-
+#pragma acc routine seq
 int height_btree(btree_t * root) {
 	if (root == NULL) return 0;
 	return root->height;
 }
 
+#pragma acc routine seq
 int weight_btree(btree_t * root) {
 	if (root == NULL) return 0;
 	return root->weight;
@@ -27,7 +28,7 @@ int weight_btree(btree_t * root) {
 
 
 
-
+#pragma acc routine seq
 void set_height(btree_t * root) {
 	if(root == NULL) return;
 	int l = height_btree(root->left);
@@ -35,11 +36,13 @@ void set_height(btree_t * root) {
 	root->height = 1 + (l >= r ? l : r);
 }
 
+#pragma acc routine seq
 void set_weight(btree_t * root) {
 	if (root == NULL) return;
 	root->weight = 1 + weight_btree(root->left) + weight_btree(root->right);
 }
 
+#pragma acc routine seq
 int balance_btree(btree_t * root) {
 	if (root == NULL) return 0;
 	int l = height_btree(root->left);
@@ -47,7 +50,7 @@ int balance_btree(btree_t * root) {
 	return l - r;
 }
 
-
+#pragma acc routine seq
 void insert_btree(btree_t ** root, unsigned long value) {
 	if (*root == NULL) {
 		btree_t * rtn = (btree_t *) malloc(sizeof(btree_t));
@@ -185,6 +188,7 @@ void insert_btree(btree_t ** root, unsigned long value) {
 	}
 }
 
+#pragma acc routine seq
 char contains_btree(btree_t * root, unsigned long value) {
 	
 	while (root != NULL) {
@@ -202,6 +206,7 @@ char contains_btree(btree_t * root, unsigned long value) {
 	
 }
 
+#pragma acc routine seq
 void to_array_btree(btree_t * root, unsigned long * data) {
 	if (root == NULL) return;
 	
@@ -213,7 +218,7 @@ void to_array_btree(btree_t * root, unsigned long * data) {
 	
 }
 
-
+#pragma acc routine seq
 void free_btree(btree_t * root) {
 	if (root == NULL) {
 		return;

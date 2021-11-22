@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 
+#pragma acc routine seq
 int cast_ray_triangle(vec_t * RayOri, vec_t * RayDir, triangle_t * Tri, intersect_t * rtn) {
 	vec_t * A = Tri->A;
 	vec_t * B = Tri->B;
@@ -62,6 +63,7 @@ int cast_ray_triangle(vec_t * RayOri, vec_t * RayDir, triangle_t * Tri, intersec
 }
 
 
+#pragma acc routine seq
 int cast_ray_sphere(vec_t * RayOri, vec_t * RayDir, sphere_t * Sph, intersect_t * rtn) {
 	/*
 	
@@ -129,12 +131,14 @@ int cast_ray_sphere(vec_t * RayOri, vec_t * RayDir, sphere_t * Sph, intersect_t 
 	return 0;
 }
 
+#pragma acc routine seq
 int cast_ray_cuboid(vec_t * RayOri, vec_t * RayDir, cuboid_t * cuboid, intersect_t * rtn) {
 	
 	return 0;
 }
 
 
+#pragma acc routine seq
 int cast_ray_primitive(vec_t * RayOri, vec_t * RayDir, primitive_t * primitive, intersect_t * rtn) {
 	int A = 0;
 	switch (primitive->type) {
@@ -165,6 +169,7 @@ int cast_ray_primitive(vec_t * RayOri, vec_t * RayDir, primitive_t * primitive, 
 	}
 }
 
+#pragma acc routine seq
 int cast_ray_bvh(vec_t * RayOri, vec_t * RayDir, bvh_t * bvh, intersect_t * rtn) {
 	
 	if (bvh == NULL) return 0;
@@ -266,6 +271,7 @@ int cast_ray_bvh(vec_t * RayOri, vec_t * RayDir, bvh_t * bvh, intersect_t * rtn)
 
 
 // TODO: Replace primative list with a BVH
+#pragma acc routine seq
 void trace_ray(vec_t * RayOri, vec_t * RayRayDir, bvh_t * bvh, color_t * rtn) {
 	
 	
@@ -297,7 +303,7 @@ void trace_ray(vec_t * RayOri, vec_t * RayRayDir, bvh_t * bvh, color_t * rtn) {
 }
 
 
-
+#pragma acc routine seq
 unsigned int color_to_int(color_t color) {
 	
 	// A B G R
@@ -309,9 +315,12 @@ unsigned int color_to_int(color_t color) {
 	
 }
 
-void render_image(camera_t * Camera, bvh_t * bvh, unsigned int * PixelBuffer) {
+void render_image(camera_t * Camera, model_t * render_target, unsigned int * PixelBuffer) {
 	
-	#pragma omp parallel for
+	#pragma acc kernels
+	{
+	bvh_t * bvh = build_bvh(render_target, 16, 8);
+		
 	for(int i = 0; i < Camera->vRES * Camera->hRES; i++) {
 		
 		int x = i % Camera->hRES;
@@ -331,5 +340,8 @@ void render_image(camera_t * Camera, bvh_t * bvh, unsigned int * PixelBuffer) {
 
 		PixelBuffer[x + y * Camera->hRES] = color_to_int(color);
 
+	}
+		
+	destroy_bvh(bvh);
 	}
 }

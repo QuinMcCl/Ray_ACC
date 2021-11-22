@@ -9,29 +9,34 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
-
+#pragma acc routine seq
 float vec_dot(vec_t A, vec_t B) {
 	return (A.x * B.x) + (A.y * B.y) + (A.z * B.z);
 }
 
+#pragma acc routine seq
 vec_t vec_cross(vec_t A, vec_t B) {
 	return (vec_t){((A.y * B.z) - (A.z * B.y)), 
 				   ((A.z * B.x) - (A.x * B.z)), 
 				   ((A.x * B.y) - (A.y * B.x))};
 }
 
+#pragma acc routine seq
 vec_t vec_scale(vec_t A, float s) {
 	return (vec_t){A.x * s, A.y * s, A.z * s};
 }
 
+#pragma acc routine seq
 vec_t vec_add(vec_t A, vec_t B) {
 	return (vec_t){A.x + B.x, A.y + B.y, A.z + B.z};
 }
 
+#pragma acc routine seq
 vec_t vec_sub(vec_t A, vec_t B) {
 	return (vec_t){A.x - B.x, A.y - B.y, A.z - B.z};
 }
 
+#pragma acc routine seq
 vec_t vec_rotate(vec_t A, vec_t B, float t) {
 	// Ru(t)x = u * DOT(u, x) + cos(t) * CROSS(CROSS(u, x), u) + sin(t) * CROSS(u, x)
 	
@@ -203,7 +208,7 @@ void destroy_model(model_t * model) {
 }
 
 
-
+#pragma acc routine seq
 void get_bounds_triangle(triangle_t * triangle, vec_t * p_min, vec_t * p_mid, vec_t * p_max) {
 	
 	vec_t *A = triangle->A;
@@ -268,18 +273,21 @@ void get_bounds_triangle(triangle_t * triangle, vec_t * p_min, vec_t * p_mid, ve
 	
 }
 
+#pragma acc routine seq
 void get_bounds_sphere(sphere_t * sphere, vec_t * p_min, vec_t * p_mid, vec_t * p_max) {
 	*p_min = (vec_t){sphere->ori->x - *sphere->radius, sphere->ori->y - *sphere->radius, sphere->ori->z - *sphere->radius};
 	*p_mid = *sphere->ori;
 	*p_max = (vec_t){sphere->ori->x + *sphere->radius, sphere->ori->y + *sphere->radius, sphere->ori->z + *sphere->radius};
 }
 
+#pragma acc routine seq
 void get_bounds_cuboid(cuboid_t * cuboid, vec_t * p_min, vec_t * p_mid, vec_t * p_max) {
 	*p_min = *cuboid->min;
 	*p_mid = (vec_t){(cuboid->min->x + cuboid->max->x) * 0.5f, (cuboid->min->y + cuboid->max->y) * 0.5f, (cuboid->min->z + cuboid->max->z) * 0.5f};
 	*p_max = *cuboid->max;
 }
 
+#pragma acc routine seq
 void get_bounds_primitive(primitive_t * primitive, vec_t * p_min, vec_t * p_mid, vec_t * p_max) {
 	
 	switch (primitive->type) {
@@ -300,6 +308,7 @@ void get_bounds_primitive(primitive_t * primitive, vec_t * p_min, vec_t * p_mid,
 	}
 }
 
+#pragma acc routine seq
 int overlap_bounds(vec_t * A_min, vec_t * A_max, vec_t * B_min, vec_t * B_max) {
 	
 	return (A_min->x <= B_max->x && A_max->x >= B_min->x) && 
@@ -308,10 +317,12 @@ int overlap_bounds(vec_t * A_min, vec_t * A_max, vec_t * B_min, vec_t * B_max) {
 	
 }
 
+#pragma acc routine seq
 unsigned long hash_vec(vec_t * vec) {
 	return (((unsigned long)floor(vec->x * 607.0)) & 0x3FF) | ((((unsigned long)floor(vec->y * 47.0)) & 0x3FF) << 10) | ((((unsigned long)floor(vec->z * 809.0)) & 0x3FF) << 20);
 }
 
+#pragma acc routine seq
 bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * smin, vec_t * smax, int limit, int depth) {
 	
 	if (depth < 0) return NULL;
@@ -448,10 +459,12 @@ bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * sm
 	}
 }
 
+#pragma acc routine seq
 bvh_t * build_bvh(model_t * model, int limit, int depth) {
 	return create_bvh(model->primitive_count, model->primitive_list, NULL, NULL, limit, depth);
 }
 
+#pragma acc routine seq
 void destroy_bvh(bvh_t * bvh) {
 	if (bvh) {
 		if (bvh->children_count > 0) {

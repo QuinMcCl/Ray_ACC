@@ -15,14 +15,7 @@
 #include "primitive.h"
 #include "Ray.h"
 
-
-
-
-
-
-
 int main() {
-	
 	
 	// Init
 	
@@ -32,25 +25,19 @@ int main() {
 	Camera.up =		(vec_t){0.0f, 1.0f, 0.0f};
 	Camera.right =	(vec_t){0.0f, 0.0f, 1.0f};
 	
-	Camera.hRES = 7680;
-	Camera.vRES = 4320;
+	Camera.hRES = 1920;
+	Camera.vRES = 1080;
 	
 	Camera.hFOV = M_PI / 2.0f;
 	Camera.vFOV = Camera.hFOV * ((float)Camera.vRES / (float)Camera.hRES);
 	
-	
 	unsigned int * PixelBuffer = (unsigned int *) malloc(sizeof(unsigned int) * Camera.hRES * Camera.vRES);
 	
-	
 	// Make primitives list here!
-	
-	
-	
 	
 	float rho = 1.0f;
 	float theta = 0.0f;
 	float phi = M_PI / 4.0f;
-	
 	
 	vec_t phys_vec_list[4];
 	int phys_vec_count = 4;
@@ -61,14 +48,12 @@ int main() {
 	
 	triangle_t triangle = (triangle_t){phys_vec_list + 0, phys_vec_list + 1, phys_vec_list + 2};
 	
-	
 	float gamma = 0.0f;
 	double radius = 0.5f;
 	
 	phys_vec_list[3] = (vec_t){0.0f, 1.0f * sin(gamma), 0.0f};
 	
 	sphere_t sphere = (sphere_t){phys_vec_list + 3, &radius};
-	
 	
 	primitive_t phys_primitive_list[2];
 	int phys_primitive_count = 2;
@@ -78,8 +63,6 @@ int main() {
 	
 	phys_primitive_list[1].type = SPHERE;
 	phys_primitive_list[1].data.sphere = sphere;
-	
-	
 	
 	model_t phys_model = (model_t){phys_vec_list, phys_vec_count, phys_primitive_list, phys_primitive_count};
 	printf("Phys Model: %d, %d\n", phys_model.vec_count, phys_model.primitive_count);
@@ -92,11 +75,6 @@ int main() {
 	vec_t bunny_right = (vec_t){0.0, 0.0, 1.0};
 	vec_t bunny_pos = (vec_t){0.0, 0.0, 0.0};
 
-	
-	
-	
-	
-	
 	// Render Loop
 	
 	char loop = 1;
@@ -106,7 +84,6 @@ int main() {
 	char title[64];
 	
 	mkdir("./Output", 0777);
-	
 	
 	while (loop) {
 		
@@ -124,17 +101,11 @@ int main() {
 		gamma += M_PI / 32.0f;
 		phys_vec_list[3] = (vec_t){0.0f, 1.0f * sin(gamma), 0.0f};
 		
-		
-		
-		
 		bunny_pos.z += 0.01;
 		bunny_pos.y -= 0.01;
 		
-		
-		
 		model_t * moving_bunny = copy_model(bunny);
 		trans_rotate_model(moving_bunny, &bunny_look, &bunny_up, &bunny_right, &bunny_pos);
-		
 		
 		// Render
 		
@@ -142,11 +113,9 @@ int main() {
 		model_t * model_list[2] = {&phys_model, moving_bunny};
 		
 		model_t * render_target = aggregate_models(model_list, model_count);
-		bvh_t * bvh = build_bvh(render_target, 16, 8);
 		
-		render_image(&Camera, bvh, PixelBuffer);
+		render_image(&Camera, render_target, PixelBuffer);
 		
-		destroy_bvh(bvh);
 		destroy_model(render_target);
 		destroy_model(moving_bunny);
 		
@@ -161,8 +130,6 @@ int main() {
 	
 	// Cleanup
 	free(PixelBuffer);
-	
-	
 	destroy_model(bunny);
 	
 	return 0;

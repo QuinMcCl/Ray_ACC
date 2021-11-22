@@ -1,25 +1,20 @@
-CC = g++
-CFLAGS = -Wall
+CC = nvc++
+CFLAGS = -acc -gpu=cc61 -Minfo=accel
+LIBS = -lm
 
-all: main
+DEPS = *.h
+OBJ = main.o Ray.o primitive.o bitmap.o btree.o
 
-main: main.o Ray.o primitive.o bitmap.o btree.o
-	$(CC) $(CFLAGS) -o $@ $^ -lm -fopenmp
-	
-main.o: main.c Ray.h primitive.h tiny_obj_loader.h
-	$(CC) $(CFLAGS) -c $< -lm -fopenmp
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-Ray.o: Ray.c Ray.h primitive.h
-	$(CC) $(CFLAGS) -c $< -lm -fopenmp
+main: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(CLIBS)
 
-primitive.o: primitive.c primitive.h
-	$(CC) $(CFLAGS) -c $< -lm
-
-btree.o: btree.c btree.h
-	$(CC) $(CFLAGS) -c $<
-
-bitmap.o: bitmap.c bitmap.h
-	$(CC) $(CFLAGS) -c $<
+profile: main
+	rm -f main_nsys.*
+	nsys profile -o main_nsys --trace openacc,cuda,openmp ./main
+	/home/quin/nsight-systems-2021.5.1/bin/nsys-ui ./main_nsys.qdrep
 
 clean:
 	rm -rf *.o

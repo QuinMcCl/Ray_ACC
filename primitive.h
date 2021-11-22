@@ -14,15 +14,21 @@ typedef struct {
 } vec_t;
 
 float vec_dot(vec_t A, vec_t B);
+#pragma acc routine(vec_dot) seq
 
 vec_t vec_cross(vec_t A, vec_t B);
+#pragma acc routine(vec_cross) seq
 
 vec_t vec_add(vec_t A, vec_t B);
+#pragma acc routine(vec_add) seq
 vec_t vec_sub(vec_t A, vec_t B);
+#pragma acc routine(vec_sub) seq
 
 vec_t vec_scale(vec_t A, float s);
+#pragma acc routine(vec_scale) seq
 
 vec_t vec_rotate(vec_t A, vec_t B, float s);
+#pragma acc routine(vec_rotate) seq
 
 
 typedef struct {
@@ -95,7 +101,9 @@ typedef struct __bvh {
 } bvh_t;
 
 bvh_t * build_bvh(model_t * model, int limit, int depth);
+#pragma acc routine(build_bvh) seq
 void destroy_bvh(bvh_t * bvh);
+#pragma acc routine(destroy_bvh) seq
 
 
 
@@ -115,3 +123,4 @@ typedef struct {
 
 
 #endif
+
