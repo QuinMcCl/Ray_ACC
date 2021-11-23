@@ -5,6 +5,7 @@
 
 #pragma acc routine seq
 int cast_ray_triangle(vec_t * RayOri, vec_t * RayDir, triangle_t * triangle, vec_t * vec_list, intersect_t * rtn) {
+	printf("cast_ray_triangle\n");
 	vec_t * A = vec_list + triangle->A;
 	vec_t * B = vec_list + triangle->B;
 	vec_t * C = vec_list + triangle->C;
@@ -137,6 +138,7 @@ int cast_ray_cuboid(vec_t * RayOri, vec_t * RayDir, cuboid_t * cuboid, vec_t * v
 
 #pragma acc routine seq
 int cast_ray_primitive(vec_t * RayOri, vec_t * RayDir, primitive_t * primitive, vec_t * vec_list, intersect_t * rtn) {
+	printf("cast_ray_primitive %g\n",primitive->type);
 	int A = 0;
 	switch (primitive->type) {
 		case TRIANGLE:
@@ -182,6 +184,8 @@ int cast_ray_bvh(vec_t * RayOri, vec_t * RayDir, bvh_t * bvh, vec_t * vec_list, 
 	float tz2 = (bvh->max.z - RayOri->z) / RayDir->z;
 	float tz3 = (bvh->mid.z - RayOri->z) / RayDir->z;
 	
+	printf("T2 %g:%g:%g\nT1 %g:%g:%g\nT3 %g:%g:%g\n",tx2,ty2,tz2,tx1,ty1,tz1,tx3,ty3,tz3);
+	
 	if (tx1 > tx2) {
 		float tmp = tx1;
 		tx1 = tx2;
@@ -205,6 +209,9 @@ int cast_ray_bvh(vec_t * RayOri, vec_t * RayDir, bvh_t * bvh, vec_t * vec_list, 
 	float tmp_max = tx2;
 	if (ty2 < tmp_max) tmp_max = ty2;
 	if (tz2 < tmp_max) tmp_max = tz2;
+	
+	printf("RayDir: %g, %g, %g\n", RayDir->x, RayDir->y, RayDir->z);
+	printf("TFAR %g:%g:%g\nTNEAR %g:%g:%g\nTMID %g:%g:%g\n",tx2,ty2,tz2,tx1,ty1,tz1,tx3,ty3,tz3);
 	
 	
 	if (tmp_max < 0.0f || tmp_max < tmp_min) return 0;
@@ -264,20 +271,18 @@ int cast_ray_bvh(vec_t * RayOri, vec_t * RayDir, bvh_t * bvh, vec_t * vec_list, 
 	
 }
 
-
-
 #pragma acc routine seq
 void trace_ray(vec_t * RayOri, vec_t * RayRayDir, bvh_t * bvh, vec_t * vec_list, color_t * rtn) {
-	
+	printf("TRACERAY\n");
 	
 	intersect_t I;
 	I.dist = INFINITY;
 	
 	cast_ray_bvh(RayOri, RayRayDir, bvh, vec_list, &I);
+	printf("DIST:%g\n",I.dist);
 	
 	
 	if (I.dist < INFINITY) {
-		
 		// This is where recursive calls would go, for reflections, refractions, lighting etc.
 		
 		
@@ -310,32 +315,47 @@ unsigned int color_to_int(color_t color) {
 	
 }
 
-void render_image(camera_t * Camera, model_t * render_target, unsigned int * PixelBuffer) {
-	#pragma enter data copyin(Camera,render_target,render_target->primitive_list,render_target->vec_list)
-	#pragma acc data pcopyout(PixelBuffer)
+
+
+void render_image(camera_t Camera, model_t render_target, unsigned int * PixelBuffer) {
+	int buffersize = Camera.hRES * Camera.vRES;
+	#pragma acc enter data copyin(buffersize)
+	#pragma acc enter data create(PixelBuffer[0:buffersize])
+	#pragma acc enter data copyin(Camera)
+	#pragma acc enter data copyin(render_target.vec_list[0:render_target.vec_count],render_target.primitive_list[0:render_target.primitive_count])
+	#pragma acc enter data copyin(render_target) attach(render_target.vec_list, render_target.primitive_list)
+	#pragma acc loop gang default(present)
 	{
 	bvh_t * bvh = build_bvh(render_target, 16, 8);
-	#pragma acc kernels
-	for(int i = 0; i < Camera->vRES * Camera->hRES; i++) {
+	
+	#pragma acc parallel loop vector
+	for(int i = 0; i < buffersize; i++) {
 		
-		int x = i % Camera->hRES;
-		int y = i / Camera->hRES;
+		int x = i % Camera.hRES;
+		int y = i / Camera.hRES;
 		
-		float Pitch = (Camera->vFOV / (float)Camera->vRES) * y - (Camera->vFOV / 2.0f);
-		float Yaw = (Camera->hFOV / 2.0f) - (Camera->hFOV / (float)Camera->hRES) * x;
+		float Pitch = (Camera.vFOV / (float)Camera.vRES) * y - (Camera.vFOV / 2.0f);
+		float Yaw = (Camera.hFOV / 2.0f) - (Camera.hFOV / (float)Camera.hRES) * x;
 
-		vec_t axis = vec_add(vec_scale(Camera->up, Yaw), vec_scale(Camera->right, Pitch));
+		vec_t axis = vec_add(vec_scale(Camera.up, Yaw), vec_scale(Camera.right, Pitch));
 		float im = 1.0f / sqrt(vec_dot(axis, axis));
 		axis = vec_scale(axis, im);
-
-		vec_t RayDir = vec_rotate(Camera->look, axis, sqrt(Yaw*Yaw + Pitch*Pitch));
+		
+		vec_t RayDir = vec_rotate(Camera.look, axis, sqrt(Yaw*Yaw + Pitch*Pitch));
 
 		color_t color = (color_t){0.0, 0.0, 0.0, 0.0};
-		trace_ray(&Camera->pos, &RayDir, bvh, render_target->vec_list, &color);
+		trace_ray(&Camera.pos, &RayDir, bvh, render_target.vec_list, &color);
 
-		PixelBuffer[x + y * Camera->hRES] = color_to_int(color);
+		PixelBuffer[x + y * Camera.hRES] = color_to_int(color);
 
 	}
 	destroy_bvh(bvh);
 	}
+	#pragma acc exit data copyout(PixelBuffer[0:buffersize])
+	#pragma acc exit data delete(Camera)
+	#pragma acc exit data delete(render_target.vec_list[0:render_target.vec_count],render_target.primitive_list[0:render_target.primitive_count])
+	#pragma acc exit data detach(render_target.vec_list, render_target.primitive_list)
+	#pragma acc exit data delete(render_target)
+		
+	
 }

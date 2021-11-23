@@ -25,8 +25,8 @@ int main() {
 	Camera.up =		(vec_t){0.0f, 1.0f, 0.0f};
 	Camera.right =	(vec_t){0.0f, 0.0f, 1.0f};
 	
-	Camera.hRES = 7680;
-	Camera.vRES = 4320;
+	Camera.hRES = 1920;
+	Camera.vRES = 1080;
 	
 	Camera.hFOV = M_PI / 2.0f;
 	Camera.vFOV = Camera.hFOV * ((float)Camera.vRES / (float)Camera.hRES);
@@ -75,9 +75,25 @@ int main() {
 	model_t * bunny = load_model("bunny.obj");
 	printf("Bunny Model: %d, %d\n", bunny->vec_count, bunny->primitive_count);
 	
-	vec_t bunny_look = (vec_t){1.0f, 0.0f, 0.0f};
-	vec_t bunny_up = (vec_t){0.0f, 1.0f, 0.0f};
-	vec_t bunny_right = (vec_t){0.0f, 0.0f, 1.0f};
+	float yaw = 0.0f;
+	float pitch = 0.0f;
+	float roll = 0.0f;
+
+	vec_t bunny_look = (vec_t){
+		(float)(cos(yaw)*cos(pitch)),
+		(float)(sin(yaw)*cos(pitch)),
+		(float)(-sin(pitch))
+		};
+	vec_t bunny_up = (vec_t){
+		(float)(cos(yaw)*sin(pitch)*sin(roll) - sin(yaw)*cos(roll)),
+		(float)(sin(yaw)*sin(pitch)*cos(roll) + cos(yaw)*cos(roll)),
+		(float)(cos(pitch)*sin(roll))
+		};
+	vec_t bunny_right = (vec_t){
+		(float)(cos(yaw)*sin(pitch)*cos(roll) + sin(yaw)*sin(roll)),
+		(float)(sin(yaw)*sin(pitch)*cos(roll) - cos(yaw)*sin(roll)),
+		(float)(cos(pitch)*cos(roll))
+		};
 	vec_t bunny_pos = (vec_t){0.0f, 0.0f, 0.0f};
 
 	// Render Loop
@@ -114,8 +130,29 @@ int main() {
 		
 		
 		
-		bunny_pos.z += 0.01;
-		bunny_pos.y -= 0.01;
+		yaw += 0.0f;	// Z Axis
+		pitch += M_PI / 32.0f;			// Y axis
+		roll += 0.0f;			// X axis
+
+		bunny_look = (vec_t){
+			(float)(cos(yaw)*cos(pitch)),
+			(float)(sin(yaw)*cos(pitch)),
+			(float)(-sin(pitch))
+			};
+		bunny_up = (vec_t){
+			(float)(cos(yaw)*sin(pitch)*sin(roll) - sin(yaw)*cos(roll)),
+			(float)(sin(yaw)*sin(pitch)*cos(roll) + cos(yaw)*cos(roll)),
+			(float)(cos(pitch)*sin(roll))
+			};
+		bunny_right = (vec_t){
+			(float)(cos(yaw)*sin(pitch)*cos(roll) + sin(yaw)*sin(roll)),
+			(float)(sin(yaw)*sin(pitch)*cos(roll) - cos(yaw)*sin(roll)),
+			(float)(cos(pitch)*cos(roll))
+			};
+
+		bunny_pos.x += 0.00f;
+		bunny_pos.z += 0.01f;
+		bunny_pos.y -= 0.01f;
 		
 		model_t * moving_bunny = copy_model(bunny);
 		trans_rotate_model(moving_bunny, &bunny_look, &bunny_up, &bunny_right, &bunny_pos);
@@ -127,7 +164,7 @@ int main() {
 		
 		model_t * render_target = aggregate_models(model_list, model_count);
 		
-		render_image(&Camera, render_target, PixelBuffer);
+		render_image(Camera, *render_target, PixelBuffer);
 		
 		destroy_model(render_target);
 		destroy_model(moving_bunny);

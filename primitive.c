@@ -331,18 +331,19 @@ unsigned long hash_vec(vec_t * vec) {
 
 #pragma acc routine seq
 bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * vec_list, vec_t * smin, vec_t * smax, int limit, int depth) {
-	
 	if (depth < 0) return NULL;
 	if (primitive_count <= 0) return NULL;
-	
 	bvh_t * rtn = (bvh_t *) malloc(sizeof(bvh_t));
 	
 	unsigned char bSetMinMax = (smin == NULL || smax == NULL);
 	
-	if(bSetMinMax) {
+	if(bSetMinMax) 
+	{
 		rtn->min = (vec_t){INFINITY, INFINITY, INFINITY};
 		rtn->max = (vec_t){-INFINITY, -INFINITY, -INFINITY};
-	} else {
+	} 
+	else 
+	{
 		rtn->min = *smin;
 		rtn->max = *smax;
 	}
@@ -351,7 +352,8 @@ bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * ve
 	int vec_count = 0;
 	btree_t * vec_tree = NULL;
 	
-	for(int i = 0; i < primitive_count; i++) {
+	for(int i = 0; i < primitive_count; i++) 
+	{
 		
 		vec_t p_min, p_mid, p_max;
 		get_bounds_primitive(primitive_list + i, vec_list, &p_min, &p_mid, &p_max);
@@ -382,13 +384,15 @@ bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * ve
 	
 	free_btree(vec_tree);
 	
-	if (vec_count != 0) {
+	if (vec_count != 0) 
+	{
 		rtn->mid.x /= (float)vec_count;
 		rtn->mid.y /= (float)vec_count;
 		rtn->mid.z /= (float)vec_count;
 	}
 	
-	if((rtn->mid.x < rtn->min.x) || (rtn->mid.x > rtn->max.x) || (rtn->mid.y < rtn->min.y) || (rtn->mid.y > rtn->max.y) || (rtn->mid.z < rtn->min.z) || (rtn->mid.z > rtn->max.z)) {
+	if((rtn->mid.x < rtn->min.x) || (rtn->mid.x > rtn->max.x) || (rtn->mid.y < rtn->min.y) || (rtn->mid.y > rtn->max.y) || (rtn->mid.z < rtn->min.z) || (rtn->mid.z > rtn->max.z)) 
+	{
 		
 		rtn->mid.x = (rtn->min.x + rtn->max.x) * 0.5f;
 		rtn->mid.y = (rtn->min.y + rtn->max.y) * 0.5f;
@@ -396,7 +400,8 @@ bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * ve
 		
 	}
 	
-	if (primitive_count > limit && depth > 0) {
+	if (primitive_count > limit && depth > 0) 
+	{
 		
 		for(int i = 0; i < 8; i++) {
 			
@@ -453,7 +458,9 @@ bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * ve
 			return NULL;
 		}
 		
-	} else {
+	}
+	else 
+	{
 		
 		rtn->children_count = 0;
 		for(int i = 0; i < 8; i++) rtn->children[i] = NULL;
@@ -467,13 +474,13 @@ bvh_t * create_bvh(int primitive_count, primitive_t * primitive_list, vec_t * ve
 }
 
 #pragma acc routine seq
-bvh_t * build_bvh(model_t * model, int limit, int depth) {
-	return create_bvh(model->primitive_count, model->primitive_list, model->vec_list, NULL, NULL, limit, depth);
+bvh_t * build_bvh(model_t model, int limit, int depth) {
+	return create_bvh(model.primitive_count, model.primitive_list, model.vec_list, NULL, NULL, limit, depth);
 }
 
 #pragma acc routine seq
 void destroy_bvh(bvh_t * bvh) {
-	if (bvh) {
+	if (bvh != NULL) {
 		if (bvh->children_count > 0) {
 			for(int i = 0; i < 8; i++) destroy_bvh(bvh->children[i]);
 		}

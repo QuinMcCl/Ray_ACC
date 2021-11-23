@@ -98,9 +98,11 @@ typedef struct __bvh {
 	primitive_t * primitive_list;
 	int primitive_count;
 	
+	
+	
 } bvh_t;
 
-bvh_t * build_bvh(model_t * model, int limit, int depth);
+bvh_t * build_bvh(model_t model, int limit, int depth);
 #pragma acc routine(build_bvh) seq
 void destroy_bvh(bvh_t * bvh);
 #pragma acc routine(destroy_bvh) seq
